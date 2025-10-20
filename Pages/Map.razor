@@ -1,0 +1,205 @@
+@page "/map"
+@using DNDMapDalton.Models
+@using DNDMapDalton.Services
+@using Microsoft.JSInterop
+@inject MapStateService MapState
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+@implements IAsyncDisposable
+
+<div class="map-container" id="mapContainer" 
+     @ondrop="OnDrop" 
+     @ondragover:preventDefault>
+    <div class="zoom-controls">
+        <button @onclick="ZoomOut">-</button>
+        <span class="zoom-level">@(Math.Round(currentZoom * 100))%</span>
+        <button @onclick="ZoomIn">+</button>
+    </div>
+    <div class="map">
+        @foreach (var player in MapState.Players)
+        {
+            <div class="player-marker" 
+                 style="left: @(player.X)px; top: @(player.Y)px"
+                 draggable="true"
+                 @ondragstart="@(e => OnDragStart(e, player))"
+                 @onclick="() => OpenPlayerEditor(player)">
+                @if (!string.IsNullOrEmpty(player.ImageUrl))
+                {
+                    <img src="@player.ImageUrl" alt="@player.Name" />
+                }
+                else
+                {
+                    <div class="default-marker">@(player.Name.Length > 0 ? player.Name[0] : '?')</div>
+                }
+                <div class="player-name">@player.Name</div>
+            </div>
+        }
+
+        @foreach (var shop in MapState.Shops)
+        {
+            <div class="shop-marker" 
+                 style="left: @(shop.X)px; top: @(shop.Y)px"
+                 @onclick="() => ShowShopInfo(shop)">
+                <i class="fas fa-store"></i>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="controls">
+    <button class="btn btn-primary" @onclick="AddNewPlayer">Add Player</button>
+</div>
+
+@if (selectedShop != null)
+{
+    <div class="shop-info">
+        <h3>@selectedShop.Name</h3>
+        <p>@selectedShop.Description</p>
+        <button class="btn btn-secondary" @onclick="() => selectedShop = null">Close</button>
+    </div>
+}
+
+@if (selectedPlayer != null)
+{
+    <div class="player-editor">
+        <h3>Edit Player</h3>
+        <div class="form-group">
+            <label>Name:</label>
+            <input type="text" class="form-control" @bind="selectedPlayer.Name" />
+        </div>
+        <div class="form-group">
+            <label>Image URL:</label>
+            <input type="text" class="form-control" @bind="selectedPlayer.ImageUrl" />
+        </div>
+        <button class="btn btn-primary" @onclick="SavePlayer">Save</button>
+        <button class="btn btn-secondary" @onclick="() => selectedPlayer = null">Cancel</button>
+    </div>
+}
+
+@code {
+    private Player? selectedPlayer;
+    private Shop? selectedShop;
+    private Player? draggedPlayer;
+    private double currentZoom = 1.0;
+    private const double zoomStep = 0.2;
+    private const double maxZoom = 3.0;
+    private const double minZoom = 0.5;
+
+    protected override async Task OnInitializedAsync()
+    {
+        MapState.OnChange += StateHasChanged;
+        MapState.InitializeShops();
+        await JSRuntime.InvokeVoidAsync("initializeDraggable");
+        await JSRuntime.InvokeVoidAsync("initializeZoom", "mapContainer");
+    }
+
+    private async Task ZoomIn()
+    {
+        var newZoom = Math.Min(maxZoom, currentZoom + zoomStep);
+        currentZoom = await UpdateZoom(newZoom);
+    }
+
+    private async Task ZoomOut()
+    {
+        var newZoom = Math.Max(minZoom, currentZoom - zoomStep);
+        currentZoom = await UpdateZoom(newZoom);
+    }
+
+    private async Task<double> UpdateZoom(double zoom)
+    {
+        try
+        {
+            var newZoom = await JSRuntime.InvokeAsync<double>("setMapZoom", zoom);
+            return newZoom;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating zoom: {ex.Message}");
+            return currentZoom;
+        }
+    }
+
+    private void OnDragStart(DragEventArgs e, Player player)
+    {
+        draggedPlayer = player;
+    }
+
+    private async Task OnDrop(DragEventArgs e)
+    {
+        if (draggedPlayer != null)
+        {
+            try
+            {
+                var position = await JSRuntime.InvokeAsync<Position>("getDragPosition", e, "mapContainer");
+                if (position != null)
+                {
+                    draggedPlayer.X = position.X;
+                    draggedPlayer.Y = position.Y;
+                    MapState.UpdatePlayer(draggedPlayer);
+                    StateHasChanged();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating player position: {ex.Message}");
+            }
+            finally
+            {
+                draggedPlayer = null;
+            }
+        }
+    }
+
+    private void AddNewPlayer()
+    {
+        var newPlayer = new Player
+        {
+            Name = $"Player {MapState.Players.Count + 1}",
+            X = 50,
+            Y = 50
+        };
+        MapState.AddPlayer(newPlayer);
+    }
+
+    private void OpenPlayerEditor(Player player)
+    {
+        selectedPlayer = new Player
+        {
+            Id = player.Id,
+            Name = player.Name,
+            ImageUrl = player.ImageUrl,
+            X = player.X,
+            Y = player.Y
+        };
+    }
+
+    private void SavePlayer()
+    {
+        if (selectedPlayer != null)
+        {
+            MapState.UpdatePlayer(selectedPlayer);
+            selectedPlayer = null;
+        }
+    }
+
+    private void ShowShopInfo(Shop shop)
+    {
+        selectedShop = shop;
+    }
+
+    public void Dispose()
+    {
+        MapState.OnChange -= StateHasChanged;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        MapState.OnChange -= StateHasChanged;
+    }
+
+    private class Position
+    {
+        public double X { get; set; }
+        public double Y { get; set; }
+    }
+}

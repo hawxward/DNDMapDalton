@@ -1,0 +1,1 @@
+This directory contains map images and other image assets for the D&D map application.
