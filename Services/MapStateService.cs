@@ -29,6 +29,19 @@ public class MapStateService
         }
     }
 
+    public void UpdateShop(Shop shop)
+    {
+        var existingShop = Shops.FirstOrDefault(s => s.Id == shop.Id);
+        if (existingShop != null)
+        {
+            existingShop.Name = shop.Name;
+            existingShop.Description = shop.Description;
+            existingShop.X = shop.X;
+            existingShop.Y = shop.Y;
+            NotifyStateChanged();
+        }
+    }
+
     public void InitializeShops()
     {
         // Add some example shops - you can modify these
