@@ -24,6 +24,7 @@ public class MapStateService
             existingPlayer.ImageUrl = player.ImageUrl;
             existingPlayer.X = player.X;
             existingPlayer.Y = player.Y;
+            existingPlayer.Size = player.Size;
             NotifyStateChanged();
         }
     }

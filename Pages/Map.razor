@@ -18,8 +18,8 @@
     <div class="map">
         @foreach (var player in MapState.Players)
         {
-            <div class="player-marker" 
-                 style="left: @(player.X)px; top: @(player.Y)px"
+            <div class="player-marker"
+                 style="left: @(player.X)px; top: @(player.Y)px; width: @(player.Size)px; height: @(player.Size)px;"
                  draggable="true"
                  @ondragstart="@(e => OnDragStart(e, player))"
                  @onclick="() => OpenPlayerEditor(player)">
@@ -29,7 +29,7 @@
                 }
                 else
                 {
-                    <div class="default-marker">@(player.Name.Length > 0 ? player.Name[0] : '?')</div>
+                    <div class="default-marker" style="width: @(player.Size)px; height: @(player.Size)px; font-size: @(player.Size * 0.5)px;">@(player.Name.Length > 0 ? player.Name[0] : '?')</div>
                 }
                 <div class="player-name">@player.Name</div>
             </div>
@@ -70,6 +70,10 @@
         <div class="form-group">
             <label>Image URL:</label>
             <input type="text" class="form-control" @bind="selectedPlayer.ImageUrl" />
+        </div>
+        <div class="form-group">
+            <label>Size (pixels):</label>
+            <input type="number" class="form-control" @bind="selectedPlayer.Size" min="20" max="120" />
         </div>
         <button class="btn btn-primary" @onclick="SavePlayer">Save</button>
         <button class="btn btn-secondary" @onclick="() => selectedPlayer = null">Cancel</button>
@@ -169,7 +173,8 @@
             Name = player.Name,
             ImageUrl = player.ImageUrl,
             X = player.X,
-            Y = player.Y
+            Y = player.Y,
+            Size = player.Size
         };
     }
 

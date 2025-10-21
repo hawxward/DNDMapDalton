@@ -7,4 +7,5 @@ public class Player
     public string ImageUrl { get; set; } = string.Empty;
     public double X { get; set; }
     public double Y { get; set; }
+    public int Size { get; set; } = 40; // Default token size in pixels
 }
