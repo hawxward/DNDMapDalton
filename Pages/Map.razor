@@ -7,14 +7,9 @@
 @implements IDisposable
 @implements IAsyncDisposable
 
-<div class="map-container" id="mapContainer" 
-     @ondrop="OnDrop" 
+<div class="map-container" id="mapContainer"
+     @ondrop="OnDrop"
      @ondragover:preventDefault>
-    <div class="zoom-controls">
-        <button @onclick="ZoomOut">-</button>
-        <span class="zoom-level">@(Math.Round(currentZoom * 100))%</span>
-        <button @onclick="ZoomIn">+</button>
-    </div>
     <div class="map">
         @foreach (var player in MapState.Players)
         {
@@ -50,6 +45,11 @@
 
 <div class="controls">
     <button class="btn btn-primary" @onclick="AddNewPlayer">Add Player</button>
+    <div class="zoom-controls">
+        <button @onclick="ZoomOut">-</button>
+        <span class="zoom-level">@(Math.Round(currentZoom * 100))%</span>
+        <button @onclick="ZoomIn">+</button>
+    </div>
 </div>
 
 @if (selectedShop != null)
