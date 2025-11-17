@@ -1,18 +1,21 @@
 window.getDragPosition = (event, containerId) => {
     const container = document.getElementById(containerId);
     if (!container) return null;
-    
-    const rect = container.getBoundingClientRect();
+
+    const scrollArea = container.querySelector('.map-scroll-area');
     const map = container.querySelector('.map');
+    if (!scrollArea || !map) return null;
+
+    const rect = scrollArea.getBoundingClientRect();
     const scale = parseFloat(map.getAttribute('data-scale') || '1');
-    
+
     // Adjust coordinates based on scale and scroll position
-    const x = (event.clientX - rect.left + container.scrollLeft) / scale;
-    const y = (event.clientY - rect.top + container.scrollTop) / scale;
-    
+    const x = (event.clientX - rect.left + scrollArea.scrollLeft) / scale;
+    const y = (event.clientY - rect.top + scrollArea.scrollTop) / scale;
+
     return {
-        x: Math.max(0, Math.min(x, container.scrollWidth / scale)),
-        y: Math.max(0, Math.min(y, container.scrollHeight / scale))
+        x: Math.max(0, Math.min(x, scrollArea.scrollWidth / scale)),
+        y: Math.max(0, Math.min(y, scrollArea.scrollHeight / scale))
     };
 };
 
@@ -27,7 +30,10 @@ window.initializeZoom = (containerId) => {
     const container = document.getElementById(containerId);
     if (!container) return;
 
+    const scrollArea = container.querySelector('.map-scroll-area');
     const map = container.querySelector('.map');
+    if (!scrollArea || !map) return;
+
     let scale = 1;
     const maxScale = 3;
     const minScale = 0.5;
@@ -40,17 +46,17 @@ window.initializeZoom = (containerId) => {
         scale = Math.min(maxScale, Math.max(minScale, newScale));
         map.style.transform = `scale(${scale})`;
         map.setAttribute('data-scale', scale.toString());
-        
+
         // Update container scroll dimensions
         const newWidth = initialWidth * scale;
         const newHeight = initialHeight * scale;
-        
+
         // Center the map after zoom
-        if (newWidth > container.offsetWidth) {
-            container.scrollLeft = (newWidth - container.offsetWidth) / 2;
+        if (newWidth > scrollArea.offsetWidth) {
+            scrollArea.scrollLeft = (newWidth - scrollArea.offsetWidth) / 2;
         }
-        if (newHeight > container.offsetHeight) {
-            container.scrollTop = (newHeight - container.offsetHeight) / 2;
+        if (newHeight > scrollArea.offsetHeight) {
+            scrollArea.scrollTop = (newHeight - scrollArea.offsetHeight) / 2;
         }
 
         // Update player markers scale to maintain size
