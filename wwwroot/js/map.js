@@ -4,18 +4,25 @@ window.getDragPosition = (event, containerId) => {
 
     const scrollArea = container.querySelector('.map-scroll-area');
     const map = container.querySelector('.map');
-    if (!scrollArea || !map) return null;
+    const wrapper = container.querySelector('.map-wrapper');
+    if (!scrollArea || !map || !wrapper) return null;
 
-    const rect = scrollArea.getBoundingClientRect();
+    const wrapperRect = wrapper.getBoundingClientRect();
     const scale = parseFloat(map.getAttribute('data-scale') || '1');
 
-    // Adjust coordinates based on scale and scroll position
-    const x = (event.clientX - rect.left + scrollArea.scrollLeft) / scale;
-    const y = (event.clientY - rect.top + scrollArea.scrollTop) / scale;
+    // Calculate position relative to the wrapper (which contains the rotated map)
+    const relativeX = event.clientX - wrapperRect.left;
+    const relativeY = event.clientY - wrapperRect.top;
+
+    // Account for rotation: swap X and Y coordinates and adjust
+    // Since map is rotated 90deg clockwise, x becomes y and y becomes (width - x)
+    const mapHeight = 1200; // Original height before rotation
+    const x = relativeY / scale;
+    const y = (wrapperRect.width - relativeX) / scale;
 
     return {
-        x: Math.max(0, Math.min(x, scrollArea.scrollWidth / scale)),
-        y: Math.max(0, Math.min(y, scrollArea.scrollHeight / scale))
+        x: Math.max(0, Math.min(x, mapHeight / scale)),
+        y: Math.max(0, Math.min(y, 900 / scale))
     };
 };
 
@@ -32,20 +39,25 @@ window.initializeZoom = (containerId) => {
 
     const scrollArea = container.querySelector('.map-scroll-area');
     const map = container.querySelector('.map');
-    if (!scrollArea || !map) return;
+    const wrapper = container.querySelector('.map-wrapper');
+    if (!scrollArea || !map || !wrapper) return;
 
     let scale = 1;
     const maxScale = 3;
     const minScale = 0.5;
 
-    // Store initial dimensions
-    const initialWidth = map.offsetWidth;
-    const initialHeight = map.offsetHeight;
+    // Store initial dimensions of the wrapper (post-rotation dimensions)
+    const initialWidth = 1200;
+    const initialHeight = 900;
 
     window.setMapZoom = (newScale) => {
         scale = Math.min(maxScale, Math.max(minScale, newScale));
         map.style.transform = `rotate(90deg) scale(${scale})`;
         map.setAttribute('data-scale', scale.toString());
+
+        // Update wrapper dimensions to scale with zoom
+        wrapper.style.width = `${initialWidth * scale}px`;
+        wrapper.style.height = `${initialHeight * scale}px`;
 
         // Update container scroll dimensions
         const newWidth = initialWidth * scale;

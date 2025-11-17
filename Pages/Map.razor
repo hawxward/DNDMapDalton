@@ -33,7 +33,8 @@
     <div class="map-scroll-area"
          @ondrop="OnDrop"
          @ondragover:preventDefault>
-        <div class="map">
+        <div class="map-wrapper">
+            <div class="map">
         @foreach (var player in MapState.Players)
         {
             <div class="player-marker"
@@ -63,6 +64,7 @@
                 <i class="fas fa-store"></i>
             </div>
         }
+            </div>
         </div>
     </div>
 </div>
