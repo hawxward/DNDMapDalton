@@ -44,7 +44,7 @@ window.initializeZoom = (containerId) => {
 
     window.setMapZoom = (newScale) => {
         scale = Math.min(maxScale, Math.max(minScale, newScale));
-        map.style.transform = `scale(${scale})`;
+        map.style.transform = `rotate(90deg) scale(${scale})`;
         map.setAttribute('data-scale', scale.toString());
 
         // Update container scroll dimensions
