@@ -7,10 +7,34 @@
 @implements IDisposable
 @implements IAsyncDisposable
 
-<div class="map-container" id="mapContainer"
-     @ondrop="OnDrop"
-     @ondragover:preventDefault>
-    <div class="map">
+<div class="map-container" id="mapContainer">
+    <!-- Map Controls Navbar -->
+    <div class="map-navbar">
+        <button class="btn btn-primary" @onclick="AddNewPlayer">
+            <i class="fas fa-user-plus"></i> Add Player
+        </button>
+        <div class="zoom-controls">
+            <button @onclick="ZoomOut">-</button>
+            <span class="zoom-level">@(Math.Round(currentZoom * 100))%</span>
+            <button @onclick="ZoomIn">+</button>
+        </div>
+        <button class="btn btn-secondary fullscreen-btn" @onclick="ToggleFullscreen">
+            @if (isFullscreen)
+            {
+                <i class="fas fa-compress"></i>
+            }
+            else
+            {
+                <i class="fas fa-expand"></i>
+            }
+        </button>
+    </div>
+
+    <div class="map-scroll-area"
+         @ondrop="OnDrop"
+         @ondragover:preventDefault>
+        <div class="map-wrapper">
+            <div class="map">
         @foreach (var player in MapState.Players)
         {
             <div class="player-marker"
@@ -40,15 +64,8 @@
                 <i class="fas fa-store"></i>
             </div>
         }
-    </div>
-</div>
-
-<div class="controls">
-    <button class="btn btn-primary" @onclick="AddNewPlayer">Add Player</button>
-    <div class="zoom-controls">
-        <button @onclick="ZoomOut">-</button>
-        <span class="zoom-level">@(Math.Round(currentZoom * 100))%</span>
-        <button @onclick="ZoomIn">+</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -88,6 +105,7 @@
     private Player? draggedPlayer;
     private Shop? draggedShop;
     private double currentZoom = 1.0;
+    private bool isFullscreen = false;
     private const double zoomStep = 0.2;
     private const double maxZoom = 3.0;
     private const double minZoom = 0.5;
@@ -98,6 +116,19 @@
         MapState.InitializeShops();
         await JSRuntime.InvokeVoidAsync("initializeDraggable");
         await JSRuntime.InvokeVoidAsync("initializeZoom", "mapContainer");
+    }
+
+    private async Task ToggleFullscreen()
+    {
+        try
+        {
+            isFullscreen = await JSRuntime.InvokeAsync<bool>("toggleFullscreen", "mapContainer");
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error toggling fullscreen: {ex.Message}");
+        }
     }
 
     private async Task ZoomIn()
