@@ -62,3 +62,42 @@ window.initializeZoom = (containerId) => {
         return scale;
     };
 };
+
+window.toggleFullscreen = async (containerId) => {
+    const container = document.getElementById(containerId);
+    if (!container) return false;
+
+    try {
+        if (!document.fullscreenElement &&
+            !document.webkitFullscreenElement &&
+            !document.mozFullScreenElement &&
+            !document.msFullscreenElement) {
+            // Enter fullscreen
+            if (container.requestFullscreen) {
+                await container.requestFullscreen();
+            } else if (container.webkitRequestFullscreen) {
+                await container.webkitRequestFullscreen();
+            } else if (container.mozRequestFullScreen) {
+                await container.mozRequestFullScreen();
+            } else if (container.msRequestFullscreen) {
+                await container.msRequestFullscreen();
+            }
+            return true;
+        } else {
+            // Exit fullscreen
+            if (document.exitFullscreen) {
+                await document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                await document.webkitExitFullscreen();
+            } else if (document.mozCancelFullScreen) {
+                await document.mozCancelFullScreen();
+            } else if (document.msExitFullscreen) {
+                await document.msExitFullscreen();
+            }
+            return false;
+        }
+    } catch (error) {
+        console.error('Error toggling fullscreen:', error);
+        return document.fullscreenElement != null;
+    }
+};
