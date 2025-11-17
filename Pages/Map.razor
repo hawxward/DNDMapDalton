@@ -7,14 +7,9 @@
 @implements IDisposable
 @implements IAsyncDisposable
 
-<div class="map-container" id="mapContainer" 
-     @ondrop="OnDrop" 
+<div class="map-container" id="mapContainer"
+     @ondrop="OnDrop"
      @ondragover:preventDefault>
-    <div class="zoom-controls">
-        <button @onclick="ZoomOut">-</button>
-        <span class="zoom-level">@(Math.Round(currentZoom * 100))%</span>
-        <button @onclick="ZoomIn">+</button>
-    </div>
     <div class="map">
         @foreach (var player in MapState.Players)
         {
@@ -37,8 +32,10 @@
 
         @foreach (var shop in MapState.Shops)
         {
-            <div class="shop-marker" 
+            <div class="shop-marker"
                  style="left: @(shop.X)px; top: @(shop.Y)px"
+                 draggable="true"
+                 @ondragstart="@(e => OnShopDragStart(e, shop))"
                  @onclick="() => ShowShopInfo(shop)">
                 <i class="fas fa-store"></i>
             </div>
@@ -48,6 +45,11 @@
 
 <div class="controls">
     <button class="btn btn-primary" @onclick="AddNewPlayer">Add Player</button>
+    <div class="zoom-controls">
+        <button @onclick="ZoomOut">-</button>
+        <span class="zoom-level">@(Math.Round(currentZoom * 100))%</span>
+        <button @onclick="ZoomIn">+</button>
+    </div>
 </div>
 
 @if (selectedShop != null)
@@ -84,6 +86,7 @@
     private Player? selectedPlayer;
     private Shop? selectedShop;
     private Player? draggedPlayer;
+    private Shop? draggedShop;
     private double currentZoom = 1.0;
     private const double zoomStep = 0.2;
     private const double maxZoom = 3.0;
@@ -126,6 +129,13 @@
     private void OnDragStart(DragEventArgs e, Player player)
     {
         draggedPlayer = player;
+        draggedShop = null;
+    }
+
+    private void OnShopDragStart(DragEventArgs e, Shop shop)
+    {
+        draggedShop = shop;
+        draggedPlayer = null;
     }
 
     private async Task OnDrop(DragEventArgs e)
@@ -150,6 +160,28 @@
             finally
             {
                 draggedPlayer = null;
+            }
+        }
+        else if (draggedShop != null)
+        {
+            try
+            {
+                var position = await JSRuntime.InvokeAsync<Position>("getDragPosition", e, "mapContainer");
+                if (position != null)
+                {
+                    draggedShop.X = position.X;
+                    draggedShop.Y = position.Y;
+                    MapState.UpdateShop(draggedShop);
+                    StateHasChanged();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating shop position: {ex.Message}");
+            }
+            finally
+            {
+                draggedShop = null;
             }
         }
     }
