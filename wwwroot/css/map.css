@@ -7,6 +7,7 @@
     display: flex;
     flex-direction: column;
     touch-action: none;
+    background-color: white;
 }
 
 .map-container:fullscreen {
@@ -141,6 +142,7 @@
     position: relative;
     width: 100%;
     height: 100%;
+    background-color: white;
 }
 
 .map-wrapper {
